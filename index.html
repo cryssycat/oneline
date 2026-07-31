@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>One Line Journal</title>
+<style>
+  :root {
+    --bg-0: #fdf2f8;
+    --bg-1: #f3e8ff;
+    --bg-2: #e0f2fe;
+    --glass: rgba(255,255,255,0.45);
+    --glass-border: rgba(255,255,255,0.6);
+    --text-primary: #4a4458;
+    --text-secondary: #9b8fae;
+    --accent: #f0a8c4;
+    --accent-blue: #a8c8f0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(160deg, var(--bg-0), var(--bg-2) 55%, var(--bg-1));
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-primary);
+    padding: 40px 20px;
+  }
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: 0.2px;
+  }
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin: 0 0 28px;
+  }
+  .card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(160,140,200,0.15);
+  }
+  input[type="text"] {
+    width: 100%;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text-primary);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+  input[type="text"]::placeholder {
+    color: var(--text-secondary);
+  }
+  .moods {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .mood-btn {
+    flex: 1;
+    min-width: 80px;
+    background: rgba(255,255,255,0.4);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 10px 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .mood-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+  }
+  .mood-btn.selected {
+    color: #5a4460;
+    font-weight: 600;
+    border-color: transparent;
+  }
+  .mood-btn[data-mood="Happy"].selected { background: #c7f0d8; }
+  .mood-btn[data-mood="Neutral"].selected { background: #d4e4fa; }
+  .mood-btn[data-mood="Sad"].selected { background: #b8d8f5; }
+  .mood-btn[data-mood="Upset"].selected { background: #fbdcb8; }
+  .mood-btn[data-mood="Angry"].selected { background: #f7c2d0; }
+  .save-btn {
+    width: 100%;
+    margin-top: 16px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-blue));
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    color: #5a4460;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .save-btn:hover { opacity: 0.9; }
+  .save-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .entries {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .entry {
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-left: 3px solid var(--dot, var(--accent));
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .entry-text {
+    font-size: 14px;
+    line-height: 1.5;
+    flex: 1;
+  }
+  .entry-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .entry-date {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .entry-mood {
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    line-height: 1;
+  }
+  .delete-btn:hover { color: #fca5a5; }
+  .empty {
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px 0;
+  }
+  .section-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>One Line Journal</h1>
+  <p class="subtitle">One line. One mood. Every day.</p>
+
+  <div class="card">
+    <input type="text" id="entryInput" placeholder="Today was..." maxlength="200" />
+    <div class="moods" id="moodButtons">
+      <div class="mood-btn" data-mood="Happy">Happy</div>
+      <div class="mood-btn" data-mood="Neutral">Neutral</div>
+      <div class="mood-btn" data-mood="Sad">Sad</div>
+      <div class="mood-btn" data-mood="Upset">Upset</div>
+      <div class="mood-btn" data-mood="Angry">Angry</div>
+    </div>
+    <button class="save-btn" id="saveBtn" disabled>Save entry</button>
+  </div>
+
+  <p class="section-label">Past entries</p>
+  <div class="entries" id="entriesList">
+    <div class="empty">Loading...</div>
+  </div>
+</div>
+
+<script>
+// Set this to your deployed Worker URL, e.g. https://journal-worker.YOUR-SUBDOMAIN.workers.dev
+const WORKER_URL = "https://oneline.crysthigpen.workers.dev";
+
+const moodColors = {
+  Happy: '#7dd4a0',
+  Neutral: '#8fb8ed',
+  Sad: '#7cb0e0',
+  Upset: '#f0a860',
+  Angry: '#e8809a'
+};
+
+let selectedMood = null;
+let entries = [];
+
+const input = document.getElementById('entryInput');
+const saveBtn = document.getElementById('saveBtn');
+const entriesList = document.getElementById('entriesList');
+const moodButtons = document.querySelectorAll('.mood-btn');
+
+function updateSaveState() {
+  saveBtn.disabled = !(input.value.trim() && selectedMood);
+}
+
+input.addEventListener('input', updateSaveState);
+
+moodButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    moodButtons.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedMood = btn.dataset.mood;
+    updateSaveState();
+  });
+});
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function render() {
+  if (entries.length === 0) {
+    entriesList.innerHTML = '<div class="empty">No entries yet. Write your first line above.</div>';
+    return;
+  }
+  const sorted = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+  entriesList.innerHTML = sorted.map(e => `
+    <div class="entry" style="--dot: ${moodColors[e.mood] || '#7f9cf5'}">
+      <div class="entry-text">${escapeHtml(e.text)}</div>
+      <div class="entry-meta">
+        <span class="entry-mood" style="color: ${moodColors[e.mood] || '#7f9cf5'}">${e.mood}</span>
+        <span class="entry-date">${formatDate(e.date)}</span>
+        <button class="delete-btn" data-id="${e.id}" aria-label="Delete entry">&times;</button>
+      </div>
+    </div>
+  `).join('');
+
+  entriesList.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      try {
+        const res = await fetch(`${WORKER_URL}/entries/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Delete failed');
+        entries = entries.filter(e => e.id !== id);
+        render();
+      } catch (err) {
+        alert('Could not delete entry. Check your connection.');
+      }
+    });
+  });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function loadEntries() {
+  try {
+    const res = await fetch(`${WORKER_URL}/entries`);
+    if (!res.ok) throw new Error('Request failed');
+    entries = await res.json();
+  } catch (err) {
+    entriesList.innerHTML = '<div class="empty">Could not load entries. Check the worker URL is set and deployed.</div>';
+    return;
+  }
+  render();
+}
+
+saveBtn.addEventListener('click', async () => {
+  const text = input.value.trim();
+  if (!text || !selectedMood) return;
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+
+  try {
+    const res = await fetch(`${WORKER_URL}/entries`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        mood: selectedMood,
+        date: new Date().toISOString()
+      })
+    });
+    if (!res.ok) throw new Error('Save failed');
+    const newEntry = await res.json();
+    entries.push(newEntry);
+    render();
+
+    input.value = '';
+    selectedMood = null;
+    moodButtons.forEach(b => b.classList.remove('selected'));
+  } catch (err) {
+    alert('Could not save entry. Check your connection and worker URL.');
+  }
+
+  saveBtn.textContent = 'Save entry';
+  updateSaveState();
+});
+
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !saveBtn.disabled) {
+    saveBtn.click();
+  }
+});
+
+loadEntries();
+</script>
+</body>
+</html>
